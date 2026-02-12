@@ -1,0 +1,57 @@
+* Mobile Touch Optimizations */
+
+* {
+  /* Prevent text selection on game elements */
+  -webkit-user-select: none;
+  user-select: none;
+  
+  /* Disable tap highlight */
+  -webkit-tap-highlight-color: transparent;
+  
+  /* Smooth scrolling */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Allow text selection for specific elements */
+input, textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+body {
+  /* Prevent pull-to-refresh and overscroll bounce */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  
+  /* Prevent zoom on double tap */
+  touch-action: manipulation;
+  
+  /* Prevent horizontal scroll */
+  overflow-x: hidden;
+}
+
+/* Ensure minimum touch target size (44x44px recommended) */
+button, a, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Improve touch feedback */
+button:active, [role="button"]:active {
+  transform: scale(0.95);
+  transition: transform 0.1s;
+}
+
+/* Prevent zoom on input focus (iOS) */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+/* Smooth animations on mobile */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

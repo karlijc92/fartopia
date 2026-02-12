@@ -1,0 +1,225 @@
+import React, { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+import { ArrowLeft, Trophy, Star } from 'lucide-react';
+import CoinDisplay from '../components/CoinDisplay';
+import { soundManager } from '../components/SoundManager';
+
+const CREATURES = ['🦄', '🐸', '🦙', '🐭', '🐼', '🧚', '👽', '🐬', '🔥', '🦋'];
+
+export default function MemoryGame() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [cards, setCards] = useState([]);
+  const [flipped, setFlipped] = useState([]);
+  const [matched, setMatched] = useState([]);
+  const [moves, setMoves] = useState(0);
+  const [gameActive, setGameActive] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
+  const [bonusLevel, setBonusLevel] = useState(false);
+  const [level, setLevel] = useState(1);
+
+  const { data: progress } = useQuery({
+    queryKey: ['gameProgress'],
+    queryFn: async () => {
+      const progs = await base44.entities.GameProgress.list();
+      return progs[0];
+    },
+  });
+
+  const updateProgress = useMutation({
+    mutationFn: async (coins) => {
+      return await base44.entities.GameProgress.update(progress.id, {
+        coins: progress.coins + coins,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['gameProgress']);
+    },
+  });
+
+  const initializeGame = (numPairs = 6) => {
+    const selectedCreatures = CREATURES.slice(0, numPairs);
+    const cardPairs = [...selectedCreatures, ...selectedCreatures];
+    const shuffled = cardPairs.sort(() => Math.random() - 0.5).map((emoji, index) => ({
+      id: index,
+      emoji,
+    }));
+    setCards(shuffled);
+    setFlipped([]);
+    setMatched([]);
+    setMoves(0);
+    setGameActive(true);
+    setGameOver(false);
+  };
+
+  const startGame = () => {
+    soundManager.playClickSound();
+    setLevel(1);
+    setBonusLevel(false);
+    initializeGame(6);
+  };
+
+  const startBonusLevel = () => {
+    soundManager.playUnlockSound();
+    setBonusLevel(true);
+    initializeGame(10);
+  };
+
+  const handleCardClick = (cardId) => {
+    if (flipped.length === 2 || flipped.includes(cardId) || matched.includes(cardId)) return;
+
+    soundManager.playClickSound();
+    const newFlipped = [...flipped, cardId];
+    setFlipped(newFlipped);
+
+    if (newFlipped.length === 2) {
+      setMoves(moves + 1);
+      const [first, second] = newFlipped;
+      const firstCard = cards.find(c => c.id === first);
+      const secondCard = cards.find(c => c.id === second);
+
+      if (firstCard.emoji === secondCard.emoji) {
+        soundManager.playFartSound('sparkle');
+        soundManager.playCoinSound();
+        setMatched([...matched, first, second]);
+        setFlipped([]);
+        
+        if (matched.length + 2 === cards.length) {
+          setTimeout(() => {
+            const baseCoins = bonusLevel ? 500 : 200;
+            const bonusCoins = Math.max(0, (20 - moves) * 10);
+            updateProgress.mutate(baseCoins + bonusCoins);
+            setGameOver(true);
+            setGameActive(false);
+          }, 500);
+        }
+      } else {
+        soundManager.playFartSound('squeak');
+        setTimeout(() => setFlipped([]), 1000);
+      }
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 p-6">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <Button
+            onClick={() => {
+              soundManager.playClickSound();
+              navigate(createPageUrl('GameMenu'));
+            }}
+            variant="outline"
+            className="bg-white/80 backdrop-blur-sm rounded-full"
+          >
+            <ArrowLeft className="mr-2 h-5 w-5" />
+            Back
+          </Button>
+          <CoinDisplay coins={progress?.coins || 0} />
+        </div>
+
+        <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl">
+          <div className="text-center mb-6">
+            <h1 className="text-5xl font-black text-purple-700 mb-2">
+              {bonusLevel ? '⭐ BONUS LEVEL! ⭐' : '🧠 MEMORY MATCH 🧠'}
+            </h1>
+            <p className="text-xl text-gray-700">Find matching pairs!</p>
+          </div>
+
+          <div className="flex justify-around mb-6 text-center">
+            <div className="bg-gradient-to-br from-purple-400 to-purple-600 text-white rounded-2xl p-4 min-w-[120px]">
+              <div className="text-3xl font-bold">{moves}</div>
+              <div className="text-sm">Moves</div>
+            </div>
+            <div className="bg-gradient-to-br from-pink-400 to-rose-500 text-white rounded-2xl p-4 min-w-[120px]">
+              <div className="text-3xl font-bold">{matched.length / 2}/{cards.length / 2}</div>
+              <div className="text-sm">Matched</div>
+            </div>
+          </div>
+
+          {!gameActive && !gameOver && (
+            <div className="flex items-center justify-center h-[400px]">
+              <Button
+                onClick={startGame}
+                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-3xl px-12 py-8 rounded-full shadow-2xl"
+              >
+                START GAME! 🎮
+              </Button>
+            </div>
+          )}
+
+          {gameOver && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col items-center justify-center py-8"
+            >
+              <Trophy className="h-20 w-20 text-yellow-500 mb-4" />
+              <h2 className="text-4xl font-bold text-purple-700 mb-2">
+                {bonusLevel ? 'BONUS COMPLETE!' : 'Perfect Match!'}
+              </h2>
+              <p className="text-2xl mb-2">You made {moves} moves</p>
+              <p className="text-xl text-green-600 font-bold mb-6">
+                You earned coins! 🪙
+              </p>
+              <div className="flex gap-4">
+                <Button
+                  onClick={startGame}
+                  className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xl px-8 py-6 rounded-full"
+                >
+                  Play Again!
+                </Button>
+                {!bonusLevel && (
+                  <Button
+                    onClick={startBonusLevel}
+                    className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xl px-8 py-6 rounded-full"
+                  >
+                    <Star className="mr-2 h-6 w-6" />
+                    Bonus Level!
+                  </Button>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {gameActive && (
+            <div className={`grid ${bonusLevel ? 'grid-cols-5' : 'grid-cols-4'} gap-4`}>
+              <AnimatePresence>
+                {cards.map((card) => {
+                  const isFlipped = flipped.includes(card.id) || matched.includes(card.id);
+                  return (
+                    <motion.button
+                      key={card.id}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      whileHover={{ scale: 1.05 }}
+                      onClick={() => handleCardClick(card.id)}
+                      className={`aspect-square rounded-2xl text-5xl font-bold transition-all ${
+                        isFlipped
+                          ? 'bg-gradient-to-br from-purple-400 to-pink-400 text-white'
+                          : 'bg-gradient-to-br from-gray-300 to-gray-400 text-gray-400'
+                      } shadow-lg hover:shadow-xl`}
+                    >
+                      <motion.div
+                        initial={false}
+                        animate={{ rotateY: isFlipped ? 0 : 180 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {isFlipped ? card.emoji : '💨'}
+                      </motion.div>
+                    </motion.button>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

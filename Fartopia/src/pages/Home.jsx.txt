@@ -1,0 +1,114 @@
+import React, { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+import { Gamepad2, Users, ShoppingBag, Settings, Coins } from 'lucide-react';
+import CoinDisplay from '../components/CoinDisplay';
+import HabitatCard from '../components/HabitatCard';
+import { soundManager } from '../components/SoundManager';
+
+const HABITATS = [
+  { id: 'swamp', name: 'Swampy Stink Lagoon', emoji: '🐸', color: 'from-green-400 to-emerald-600', cost: 1000 },
+  { id: 'rainbow', name: 'Rainbow Fart Meadow', emoji: '🌈', color: 'from-pink-400 to-purple-600', cost: 2000 },
+  { id: 'volcano', name: 'Thunder-Booty Volcano', emoji: '🌋', color: 'from-orange-400 to-red-600', cost: 3000 },
+  { id: 'cave', name: 'Glitter Gas Cave', emoji: '✨', color: 'from-purple-400 to-indigo-600', cost: 4000 },
+  { id: 'forest', name: 'Noisy Night Forest', emoji: '🌙', color: 'from-blue-400 to-indigo-800', cost: 5000 },
+  { id: 'space', name: 'Cosmic Toot Galaxy', emoji: '🚀', color: 'from-indigo-500 to-purple-900', cost: 6000 },
+  { id: 'underwater', name: 'Bubbly Ocean Deep', emoji: '🌊', color: 'from-cyan-400 to-blue-600', cost: 7000 },
+  { id: 'candy', name: 'Sugar Puff Kingdom', emoji: '🍬', color: 'from-pink-300 to-rose-400', cost: 8000 },
+  { id: 'ice', name: 'Frosty Toot Tundra', emoji: '❄️', color: 'from-blue-200 to-cyan-400', cost: 9000 },
+  { id: 'desert', name: 'Sandy Breeze Dunes', emoji: '🏜️', color: 'from-yellow-400 to-amber-600', cost: 10000 },
+  { id: 'crystal', name: 'Crystal Sparkle Cavern', emoji: '💎', color: 'from-violet-400 to-fuchsia-600', cost: 11000 },
+  { id: 'jungle', name: 'Tropical Toot Jungle', emoji: '🦜', color: 'from-lime-400 to-green-600', cost: 12000 },
+  { id: 'castle', name: 'Magic Fart Castle', emoji: '🏰', color: 'from-purple-500 to-pink-500', cost: 13000 },
+  { id: 'cloud', name: 'Fluffy Cloud Kingdom', emoji: '☁️', color: 'from-sky-200 to-blue-300', cost: 14000 },
+  { id: 'fairy', name: 'Enchanted Fairy Garden', emoji: '🧚', color: 'from-pink-400 to-purple-400', cost: 15000 },
+];
+
+export default function Home() {
+  const { data: progress } = useQuery({
+    queryKey: ['gameProgress'],
+    queryFn: async () => {
+      const progs = await base44.entities.GameProgress.list();
+      if (progs.length === 0) {
+        return await base44.entities.GameProgress.create({ coins: 500, unlocked_habitats: [] });
+      }
+      return progs[0];
+    },
+  });
+
+  // Update sound manager when settings change
+  useEffect(() => {
+    if (progress) {
+      soundManager.setEnabled(progress.sound_enabled);
+      soundManager.setVibrationEnabled(progress.vibration_enabled);
+    }
+  }, [progress?.sound_enabled, progress?.vibration_enabled]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+          <motion.h1
+            className="text-5xl md:text-6xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent"
+            animate={{ scale: [1, 1.05, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            🎪 FARTOPIA ZOO
+          </motion.h1>
+          <CoinDisplay coins={progress?.coins || 0} />
+        </div>
+
+        {/* Action buttons */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <Link to={createPageUrl('GameMenu')} className="w-full" onClick={() => soundManager.playClickSound()}>
+            <Button className="w-full h-20 bg-gradient-to-br from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-white rounded-2xl shadow-lg text-lg font-bold">
+              <Gamepad2 className="mr-2 h-6 w-6" />
+              Play Games!
+            </Button>
+          </Link>
+          <Link to={createPageUrl('MyCreatures')} className="w-full" onClick={() => soundManager.playClickSound()}>
+            <Button className="w-full h-20 bg-gradient-to-br from-purple-400 to-purple-600 hover:from-purple-500 hover:to-purple-700 text-white rounded-2xl shadow-lg text-lg font-bold">
+              <Users className="mr-2 h-6 w-6" />
+              My Creatures
+            </Button>
+          </Link>
+          <Link to={createPageUrl('Shop')} className="w-full" onClick={() => soundManager.playClickSound()}>
+            <Button className="w-full h-20 bg-gradient-to-br from-pink-400 to-rose-500 hover:from-pink-500 hover:to-rose-600 text-white rounded-2xl shadow-lg text-lg font-bold">
+              <ShoppingBag className="mr-2 h-6 w-6" />
+              Shop
+            </Button>
+          </Link>
+          <Link to={createPageUrl('Settings')} className="w-full" onClick={() => soundManager.playClickSound()}>
+            <Button className="w-full h-20 bg-gradient-to-br from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white rounded-2xl shadow-lg text-lg font-bold">
+              <Settings className="mr-2 h-6 w-6" />
+              Settings
+            </Button>
+          </Link>
+        </div>
+
+        {/* Habitats */}
+        <div className="bg-white/50 backdrop-blur-sm rounded-3xl p-6 shadow-xl">
+          <h2 className="text-3xl font-bold text-purple-700 mb-6 flex items-center">
+            <span className="mr-3">🏠</span>
+            Your Habitats
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {HABITATS.map((habitat, index) => (
+              <HabitatCard
+                key={habitat.id}
+                habitat={habitat}
+                isUnlocked={progress?.unlocked_habitats?.includes(habitat.id)}
+                progress={progress}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

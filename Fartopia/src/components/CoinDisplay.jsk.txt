@@ -1,0 +1,16 @@
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Coins } from 'lucide-react';
+
+export default function CoinDisplay({ coins }) {
+  return (
+    <motion.div
+      className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3"
+      animate={{ scale: [1, 1.05, 1] }}
+      transition={{ duration: 2, repeat: Infinity }}
+    >
+      <Coins className="h-6 w-6" />
+      <span className="text-2xl font-bold">{coins.toLocaleString()}</span>
+    </motion.div>
+  );
+}
