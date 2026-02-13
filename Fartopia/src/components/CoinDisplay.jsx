@@ -13,4 +13,5 @@ export default function CoinDisplay({ coins }) {
       <span className="text-2xl font-bold">{coins.toLocaleString()}</span>
     </motion.div>
   );
+
 }
