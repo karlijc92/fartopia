@@ -1,142 +1,267 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { ArrowLeft, Zap, Brain, Sparkles, Rocket, Target } from 'lucide-react';
+import { ArrowLeft, Trophy, Zap, Brain, Coins } from 'lucide-react';
 import CoinDisplay from '../components/CoinDisplay';
 import { soundManager } from '../components/SoundManager';
 
-const GAMES = [
-  { 
-    id: 'tap', 
-    name: 'Tap The Farts!', 
-    description: 'Tap creatures as fast as you can!',
-    emoji: '💨', 
-    color: 'from-blue-400 to-purple-500',
-    page: 'MiniGame',
-    icon: Zap
-  },
-  { 
-    id: 'memory', 
-    name: 'Memory Match', 
-    description: 'Match pairs of farting creatures!',
-    emoji: '🧠', 
-    color: 'from-pink-400 to-rose-500',
-    page: 'MemoryGame',
-    icon: Brain
-  },
-  { 
-    id: 'bubble', 
-    name: 'Bubble Pop', 
-    description: 'Pop bubbles before they escape!',
-    emoji: '💭', 
-    color: 'from-cyan-400 to-blue-500',
-    page: 'BubbleGame',
-    icon: Sparkles
-  },
-  { 
-    id: 'race', 
-    name: 'Creature Race', 
-    description: 'Race your creatures to victory!',
-    emoji: '🏁', 
-    color: 'from-green-400 to-emerald-500',
-    page: 'RaceGame',
-    icon: Rocket
-  },
-  { 
-    id: 'pattern', 
-    name: 'Pattern Master', 
-    description: 'Remember the fart sequence!',
-    emoji: '🎵', 
-    color: 'from-purple-400 to-fuchsia-500',
-    page: 'PatternGame',
-    icon: Target
-  },
-];
-
 export default function GameMenu() {
+
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const { data: progress } = useQuery({
     queryKey: ['gameProgress'],
     queryFn: async () => {
-      const progs = await base44.entities.GameProgress.list();
+
+      const progs =
+        await base44.entities.GameProgress.list();
+
+      if (!progs || progs.length === 0) {
+
+        const created =
+          await base44.entities.GameProgress.create({
+
+            coins: 0,
+            high_score: 0,
+            sound_enabled: true,
+            vibration_enabled: true,
+            ads_removed: false
+
+          });
+
+        return created;
+
+      }
+
       return progs[0];
-    },
+
+    }
   });
 
+  const goToGame = (gameName) => {
+
+    soundManager.playClickSound();
+
+    navigate(
+      createPageUrl(gameName)
+    );
+
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
-      <div className="max-w-6xl mx-auto">
+
+    <div className="min-h-screen bg-gradient-to-br from-purple-200 via-pink-200 to-yellow-200 p-6">
+
+      <div className="max-w-5xl mx-auto">
+
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-          <div className="flex items-center gap-4">
-            <Link to={createPageUrl('Home')} onClick={() => soundManager.playClickSound()}>
-              <Button variant="outline" className="bg-white/80 backdrop-blur-sm rounded-full">
-                <ArrowLeft className="mr-2 h-5 w-5" />
-                Back
-              </Button>
-            </Link>
-            <h1 className="text-4xl md:text-5xl font-black text-purple-700">
-              🎮 MINI GAMES 🎮
-            </h1>
-          </div>
-          <CoinDisplay coins={progress?.coins || 0} />
+
+        <div className="flex justify-between items-center mb-8">
+
+          <Button
+
+            onClick={() => {
+
+              soundManager.playClickSound();
+
+              navigate(
+                createPageUrl('Home')
+              );
+
+            }}
+
+            variant="outline"
+            className="bg-white/80 backdrop-blur-sm rounded-full"
+
+          >
+            <ArrowLeft className="mr-2 h-5 w-5" />
+            Back
+
+          </Button>
+
+          <CoinDisplay
+            coins={progress?.coins || 0}
+          />
+
         </div>
 
-        {/* Games grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {GAMES.map((game, index) => {
-            const Icon = game.icon;
-            return (
-              <motion.div
-                key={game.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Link to={createPageUrl(game.page)} onClick={() => soundManager.playClickSound()}>
-                  <div className={`bg-gradient-to-br ${game.color} rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all hover:scale-105 cursor-pointer text-white`}>
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="text-6xl">{game.emoji}</div>
-                      <Icon className="h-8 w-8" />
-                    </div>
-                    <h3 className="text-2xl font-bold mb-2">{game.name}</h3>
-                    <p className="text-white/90">{game.description}</p>
-                    <div className="mt-6">
-                      <Button className="w-full bg-white/20 hover:bg-white/30 text-white font-bold py-3 rounded-full">
-                        Play Now! →
-                      </Button>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            );
-          })}
+        {/* Title */}
+
+        <div className="text-center mb-8">
+
+          <h1 className="text-5xl font-black text-purple-700 mb-2">
+
+            🎮 Game Zone 🎮
+
+          </h1>
+
+          <p className="text-xl text-gray-700">
+
+            Play games and earn coins!
+
+          </p>
+
         </div>
 
-        {/* Daily Bonus Link */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mt-8"
-        >
-          <Link to={createPageUrl('DailyBonus')} onClick={() => soundManager.playClickSound()}>
-            <div className="bg-gradient-to-r from-yellow-300 via-orange-300 to-pink-300 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all hover:scale-105 cursor-pointer text-center">
-              <div className="flex items-center justify-center gap-4">
-                <span className="text-5xl">🎁</span>
-                <div>
-                  <h3 className="text-3xl font-black text-purple-700">Daily Bonus & Achievements!</h3>
-                  <p className="text-purple-600 font-bold">Claim your free coins every day!</p>
-                </div>
-                <span className="text-5xl">✨</span>
-              </div>
-            </div>
-          </Link>
-        </motion.div>
+        {/* Games Grid */}
+
+        <div className="grid md:grid-cols-3 gap-6">
+
+          {/* Pattern Game */}
+
+          <motion.div
+
+            whileHover={{ scale: 1.05 }}
+
+            className="bg-gradient-to-br from-purple-400 to-pink-500 rounded-3xl p-6 shadow-xl text-white text-center"
+
+          >
+
+            <Brain className="h-16 w-16 mx-auto mb-4" />
+
+            <h2 className="text-2xl font-bold mb-2">
+
+              Pattern Master
+
+            </h2>
+
+            <p className="mb-4">
+
+              Repeat fart sequences
+
+            </p>
+
+            <Button
+
+              onClick={() => goToGame('PatternGame')}
+
+              className="bg-white text-purple-600 font-bold text-xl px-8 py-4 rounded-full"
+
+            >
+
+              Play
+
+            </Button>
+
+          </motion.div>
+
+          {/* Race Game */}
+
+          <motion.div
+
+            whileHover={{ scale: 1.05 }}
+
+            className="bg-gradient-to-br from-green-400 to-emerald-500 rounded-3xl p-6 shadow-xl text-white text-center"
+
+          >
+
+            <Zap className="h-16 w-16 mx-auto mb-4" />
+
+            <h2 className="text-2xl font-bold mb-2">
+
+              Creature Race
+
+            </h2>
+
+            <p className="mb-4">
+
+              Pick and win coins
+
+            </p>
+
+            <Button
+
+              onClick={() => goToGame('RaceGame')}
+
+              className="bg-white text-green-600 font-bold text-xl px-8 py-4 rounded-full"
+
+            >
+
+              Play
+
+            </Button>
+
+          </motion.div>
+
+          {/* Future expansion */}
+
+          <motion.div
+
+            whileHover={{ scale: 1.05 }}
+
+            className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl p-6 shadow-xl text-white text-center"
+
+          >
+
+            <Trophy className="h-16 w-16 mx-auto mb-4" />
+
+            <h2 className="text-2xl font-bold mb-2">
+
+              More Games Soon
+
+            </h2>
+
+            <p className="mb-4">
+
+              New coin games coming
+
+            </p>
+
+            <Button
+
+              onClick={() => {}}
+
+              disabled
+
+              className="bg-white/50 text-white font-bold text-xl px-8 py-4 rounded-full"
+
+            >
+
+              Locked
+
+            </Button>
+
+          </motion.div>
+
+        </div>
+
+        {/* Monetization prompt */}
+
+        <div className="mt-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl p-6 text-white text-center shadow-xl">
+
+          <Coins className="h-10 w-10 mx-auto mb-2" />
+
+          <h3 className="text-2xl font-bold">
+
+            Earn coins faster in the Shop!
+
+          </h3>
+
+          <Button
+
+            onClick={() => navigate(
+              createPageUrl('Shop')
+            )}
+
+            className="mt-4 bg-white text-orange-600 font-bold text-xl px-8 py-4 rounded-full"
+
+          >
+
+            Go to Shop
+
+          </Button>
+
+        </div>
+
       </div>
+
     </div>
+
   );
+
 }
