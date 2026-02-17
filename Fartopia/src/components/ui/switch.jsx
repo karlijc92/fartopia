@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function Switch({ checked = false, onCheckedChange }) {
+export function Switch({ checked = false, onCheckedChange }) {
   return (
     <button
       onClick={() => onCheckedChange && onCheckedChange(!checked)}
