@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -44,6 +43,7 @@ const CREATURES_DATA = [
 ];
 
 export default function MyCreatures() {
+
   const queryClient = useQueryClient();
 
   const { data: progress } = useQuery({
@@ -54,13 +54,12 @@ export default function MyCreatures() {
     },
   });
 
-  // Update sound manager when settings change
   useEffect(() => {
     if (progress) {
       soundManager.setEnabled(progress.sound_enabled);
       soundManager.setVibrationEnabled(progress.vibration_enabled);
     }
-  }, [progress?.sound_enabled, progress?.vibration_enabled]);
+  }, [progress]);
 
   const { data: creatures } = useQuery({
     queryKey: ['creatures'],
@@ -69,63 +68,68 @@ export default function MyCreatures() {
     },
   });
 
-  // Initialize creatures if empty
-  useEffect(() => {
-    const initCreatures = async () => {
-      if (creatures && creatures.length === 0) {
-        const creaturesToCreate = CREATURES_DATA.map((c) => ({
-          creature_id: c.id,
-          name: c.name,
-          emoji: c.emoji,
-          rarity: c.rarity,
-          fart_sound: c.fart_sound,
-          unlocked: c.rarity === 'Common',
-        }));
-        await base44.entities.Creature.bulkCreate(creaturesToCreate);
-        queryClient.invalidateQueries(['creatures']);
-      }
-    };
-    initCreatures();
-  }, [creatures]);
-
+  // SAFE unlock — always fetch latest coin value
   const unlockCreature = useMutation({
+
     mutationFn: async ({ creatureId, cost }) => {
-      const creature = creatures.find((c) => c.creature_id === creatureId);
-      await base44.entities.Creature.update(creature.id, { unlocked: true });
-      await base44.entities.GameProgress.update(progress.id, {
-        coins: progress.coins - cost,
+
+      const latestProgressList = await base44.entities.GameProgress.list();
+      const latestProgress = latestProgressList[0];
+
+      const creature = creatures.find(c => c.creature_id === creatureId);
+
+      await base44.entities.Creature.update(creature.id, {
+        unlocked: true
       });
+
+      await base44.entities.GameProgress.update(latestProgress.id, {
+        coins: latestProgress.coins - cost
+      });
+
     },
+
     onSuccess: () => {
       queryClient.invalidateQueries(['creatures']);
       queryClient.invalidateQueries(['gameProgress']);
     },
+
   });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
+
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
+
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+
           <div className="flex items-center gap-4">
-            <Link to={createPageUrl('Home')} onClick={() => soundManager.playClickSound()}>
-              <Button variant="outline" className="bg-white/80 backdrop-blur-sm rounded-full">
+
+            <Link to={createPageUrl('Home')}>
+              <Button variant="outline">
                 <ArrowLeft className="mr-2 h-5 w-5" />
                 Back
               </Button>
             </Link>
-            <h1 className="text-4xl md:text-5xl font-black text-purple-700">
+
+            <h1 className="text-4xl font-black text-purple-700">
               🦄 My Creatures 🦄
             </h1>
+
           </div>
+
           <CoinDisplay coins={progress?.coins || 0} />
+
         </div>
 
-        {/* Creatures grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+
           {CREATURES_DATA.map((creatureData, index) => {
-            const creature = creatures?.find((c) => c.creature_id === creatureData.id);
+
+            const creature =
+              creatures?.find(c => c.creature_id === creatureData.id);
+
             return (
+
               <CreatureCard
                 key={creatureData.id}
                 creature={creature || { ...creatureData, unlocked: false }}
@@ -134,10 +138,16 @@ export default function MyCreatures() {
                 canAfford={progress?.coins >= creatureData.cost}
                 delay={index * 0.05}
               />
+
             );
+
           })}
+
         </div>
+
       </div>
+
     </div>
   );
+
 }
