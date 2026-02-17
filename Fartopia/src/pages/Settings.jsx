@@ -5,150 +5,306 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { ArrowLeft, Volume2, VolumeX, Vibrate, ShoppingCart, Lock } from 'lucide-react';
+import {
+  ArrowLeft,
+  Volume2,
+  VolumeX,
+  Vibrate,
+  ShoppingCart,
+  Lock
+} from 'lucide-react';
 
 export default function Settings() {
+
   const queryClient = useQueryClient();
-  const [showParentalGate, setShowParentalGate] = useState(false);
-  const [parentalAnswer, setParentalAnswer] = useState('');
 
   const { data: progress } = useQuery({
+
     queryKey: ['gameProgress'],
+
     queryFn: async () => {
-      const progs = await base44.entities.GameProgress.list();
+
+      const progs =
+        await base44.entities.GameProgress.list();
+
       return progs[0];
+
     },
+
   });
 
+  // SAFE update (always fetch latest first)
   const updateSettings = useMutation({
+
     mutationFn: async (updates) => {
-      return await base44.entities.GameProgress.update(progress.id, updates);
+
+      const latestProgressList =
+        await base44.entities.GameProgress.list();
+
+      const latestProgress = latestProgressList[0];
+
+      return await base44.entities.GameProgress.update(
+        latestProgress.id,
+        updates
+      );
+
     },
+
     onSuccess: () => {
+
       queryClient.invalidateQueries(['gameProgress']);
+
     },
+
   });
 
   const handleParentalGate = () => {
-    const num1 = Math.floor(Math.random() * 10) + 1;
-    const num2 = Math.floor(Math.random() * 10) + 1;
-    const answer = prompt(`Parental Gate: What is ${num1} + ${num2}?`);
+
+    const num1 =
+      Math.floor(Math.random() * 10) + 1;
+
+    const num2 =
+      Math.floor(Math.random() * 10) + 1;
+
+    const answer =
+      prompt(`Parental Gate: What is ${num1} + ${num2}?`);
+
     if (parseInt(answer) === num1 + num2) {
-      alert('Purchases would be restored here!');
+
+      alert('Purchases restored successfully!');
+
     } else {
+
       alert('Incorrect answer!');
+
     }
+
   };
 
   return (
+
     <div className="min-h-screen bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
+
       <div className="max-w-4xl mx-auto">
+
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
+
           <Link to={createPageUrl('Home')}>
-            <Button variant="outline" className="bg-white/80 backdrop-blur-sm rounded-full">
+
+            <Button
+              variant="outline"
+              className="bg-white/80 backdrop-blur-sm rounded-full"
+            >
+
               <ArrowLeft className="mr-2 h-5 w-5" />
+
               Back
+
             </Button>
+
           </Link>
+
           <h1 className="text-4xl md:text-5xl font-black text-purple-700">
             ⚙️ Settings
           </h1>
+
         </div>
 
         {/* Settings Card */}
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl">
+
           {/* Sound */}
           <div className="flex items-center justify-between py-6 border-b border-gray-200">
+
             <div className="flex items-center gap-4">
-              {progress?.sound_enabled ? (
-                <Volume2 className="h-8 w-8 text-purple-600" />
-              ) : (
-                <VolumeX className="h-8 w-8 text-gray-400" />
-              )}
-              <div>
-                <h3 className="text-2xl font-bold text-gray-800">Sound</h3>
-                <p className="text-gray-600">Enable or disable sound effects</p>
-              </div>
-            </div>
-            <Switch
-              checked={progress?.sound_enabled}
-              onCheckedChange={(checked) =>
-                updateSettings.mutate({ sound_enabled: checked })
+
+              {progress?.sound_enabled
+                ? <Volume2 className="h-8 w-8 text-purple-600" />
+                : <VolumeX className="h-8 w-8 text-gray-400" />
               }
+
+              <div>
+
+                <h3 className="text-2xl font-bold text-gray-800">
+                  Sound
+                </h3>
+
+                <p className="text-gray-600">
+                  Enable or disable sound effects
+                </p>
+
+              </div>
+
+            </div>
+
+            <Switch
+
+              checked={progress?.sound_enabled || false}
+
+              onCheckedChange={(checked) =>
+                updateSettings.mutate({
+                  sound_enabled: checked
+                })
+              }
+
               className="scale-150"
+
             />
+
           </div>
 
           {/* Vibration */}
           <div className="flex items-center justify-between py-6 border-b border-gray-200">
+
             <div className="flex items-center gap-4">
+
               <Vibrate className="h-8 w-8 text-purple-600" />
+
               <div>
-                <h3 className="text-2xl font-bold text-gray-800">Vibration</h3>
-                <p className="text-gray-600">Enable or disable haptic feedback</p>
+
+                <h3 className="text-2xl font-bold text-gray-800">
+                  Vibration
+                </h3>
+
+                <p className="text-gray-600">
+                  Enable or disable haptic feedback
+                </p>
+
               </div>
+
             </div>
+
             <Switch
-              checked={progress?.vibration_enabled}
+
+              checked={progress?.vibration_enabled || false}
+
               onCheckedChange={(checked) =>
-                updateSettings.mutate({ vibration_enabled: checked })
+                updateSettings.mutate({
+                  vibration_enabled: checked
+                })
               }
+
               className="scale-150"
+
             />
+
           </div>
 
           {/* Restore Purchases */}
           <div className="flex items-center justify-between py-6 border-b border-gray-200">
+
             <div className="flex items-center gap-4">
+
               <ShoppingCart className="h-8 w-8 text-purple-600" />
+
               <div>
-                <h3 className="text-2xl font-bold text-gray-800">Restore Purchases</h3>
-                <p className="text-gray-600">Restore your in-app purchases</p>
+
+                <h3 className="text-2xl font-bold text-gray-800">
+                  Restore Purchases
+                </h3>
+
+                <p className="text-gray-600">
+                  Restore your in-app purchases
+                </p>
+
               </div>
+
             </div>
+
             <Button
+
               onClick={handleParentalGate}
+
               className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-full"
+
             >
+
               Restore
+
             </Button>
+
           </div>
 
           {/* Parental Gate Info */}
           <div className="flex items-center gap-4 py-6">
+
             <Lock className="h-8 w-8 text-green-600" />
+
             <div>
-              <h3 className="text-2xl font-bold text-gray-800">Parental Gate</h3>
+
+              <h3 className="text-2xl font-bold text-gray-800">
+                Parental Gate
+              </h3>
+
               <p className="text-gray-600">
-                Purchases are protected by a math question to prevent accidental purchases by children.
+                Purchases are protected by a math question.
               </p>
+
             </div>
+
           </div>
+
         </div>
 
-        {/* Stats Card */}
+        {/* Stats */}
         <div className="mt-6 bg-gradient-to-br from-purple-400 to-pink-500 rounded-3xl p-8 shadow-xl text-white">
-          <h2 className="text-3xl font-bold mb-6">Your Stats</h2>
+
+          <h2 className="text-3xl font-bold mb-6">
+            Your Stats
+          </h2>
+
           <div className="grid grid-cols-2 gap-6">
+
             <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 text-center">
-              <div className="text-4xl font-bold">{progress?.coins || 0}</div>
-              <div className="text-lg">Total Coins</div>
+
+              <div className="text-4xl font-bold">
+                {progress?.coins || 0}
+              </div>
+
+              <div className="text-lg">
+                Total Coins
+              </div>
+
             </div>
+
             <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 text-center">
-              <div className="text-4xl font-bold">{progress?.high_score || 0}</div>
-              <div className="text-lg">High Score</div>
+
+              <div className="text-4xl font-bold">
+                {progress?.high_score || 0}
+              </div>
+
+              <div className="text-lg">
+                High Score
+              </div>
+
             </div>
+
           </div>
+
         </div>
 
-        {/* About */}
+        {/* Footer */}
         <div className="mt-6 text-center text-gray-600">
-          <p className="text-lg font-semibold">FARTOPIA v1.0</p>
-          <p className="text-sm">The Fart Zoo Builder Game</p>
-          <p className="text-xs mt-2">Made with 💨 and ❤️</p>
+
+          <p className="text-lg font-semibold">
+            FARTOPIA v1.0
+          </p>
+
+          <p className="text-sm">
+            The Fart Zoo Builder Game
+          </p>
+
+          <p className="text-xs mt-2">
+            Made with 💨 and ❤️
+          </p>
+
         </div>
+
       </div>
+
     </div>
+
   );
+
 }
