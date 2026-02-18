@@ -1,17 +1,27 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Coins } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import { GameProgress } from "../utils/GameProgress";
 
-export default function CoinDisplay({ coins }) {
+export default function CoinDisplay() {
+  const [coins, setCoins] = useState(0);
+
+  useEffect(() => {
+    const currentCoins = GameProgress.getCoins();
+    setCoins(currentCoins);
+  }, []);
+
   return (
-    <motion.div
-      className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3"
-      animate={{ scale: [1, 1.05, 1] }}
-      transition={{ duration: 2, repeat: Infinity }}
+    <div
+      style={{
+        background: "linear-gradient(45deg, #FFD700, #FFA500)",
+        padding: "8px 16px",
+        borderRadius: "20px",
+        fontWeight: "bold",
+        fontSize: "18px",
+        color: "white",
+        display: "inline-block"
+      }}
     >
-      <Coins className="h-6 w-6" />
-      <span className="text-2xl font-bold">{coins.toLocaleString()}</span>
-    </motion.div>
+      🪙 {coins}
+    </div>
   );
-
 }
