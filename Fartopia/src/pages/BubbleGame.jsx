@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import GameProgress from "../utils/GameProgress";
+import { GameProgress } from "../utils/GameProgress";
 import { Sounds } from "../utils/sounds";
 
 export default function BubbleGame() {
