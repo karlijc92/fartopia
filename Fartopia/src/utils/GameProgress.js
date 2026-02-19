@@ -1,60 +1,54 @@
+// src/utils/GameProgress.js
+
 const STORAGE_KEY = "fartopia_progress";
 
-function loadProgress() {
-  const data = localStorage.getItem(STORAGE_KEY);
-
-  if (!data) {
-    return {
-      coins: 0,
-      unlockedWorlds: ["banana", "lava"],
-      unlockedCreatures: []
-    };
+class GameProgressClass {
+  constructor() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    this.data = saved
+      ? JSON.parse(saved)
+      : {
+          coins: 0,
+          unlockedCreatures: [],
+          unlockedWorlds: []
+        };
   }
 
-  return JSON.parse(data);
-}
+  save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+  }
 
-function saveProgress(progress) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
-}
-
-const GameProgress = {
   getCoins() {
-    const progress = loadProgress();
-    return progress.coins;
-  },
+    return this.data.coins || 0;
+  }
 
   addCoins(amount) {
-    const progress = loadProgress();
-    progress.coins += amount;
-    saveProgress(progress);
-  },
+    this.data.coins += amount;
+    this.save();
+  }
 
   spendCoins(amount) {
-    const progress = loadProgress();
-
-    if (progress.coins >= amount) {
-      progress.coins -= amount;
-      saveProgress(progress);
+    if (this.data.coins >= amount) {
+      this.data.coins -= amount;
+      this.save();
       return true;
     }
-
     return false;
-  },
-
-  unlockWorld(world) {
-    const progress = loadProgress();
-
-    if (!progress.unlockedWorlds.includes(world)) {
-      progress.unlockedWorlds.push(world);
-      saveProgress(progress);
-    }
-  },
-
-  isWorldUnlocked(world) {
-    const progress = loadProgress();
-    return progress.unlockedWorlds.includes(world);
   }
-};
 
-export default GameProgress;
+  unlockCreature(id) {
+    if (!this.data.unlockedCreatures.includes(id)) {
+      this.data.unlockedCreatures.push(id);
+      this.save();
+    }
+  }
+
+  unlockWorld(id) {
+    if (!this.data.unlockedWorlds.includes(id)) {
+      this.data.unlockedWorlds.push(id);
+      this.save();
+    }
+  }
+}
+
+export const GameProgress = new GameProgressClass();
