@@ -8,7 +8,6 @@ export default function GameMenu() {
   const [coins, setCoins] = useState(0);
 
   useEffect(() => {
-    // Load coins from local-only progress system
     setCoins(GameProgress.getCoins());
   }, []);
 
@@ -33,19 +32,19 @@ export default function GameMenu() {
           flexWrap: "wrap"
         }}
       >
-        <button onClick={() => navigate("/play")}>
+        <button onClick={() => navigate("/MiniGame")}>
           Play Games!
         </button>
 
-        <button onClick={() => navigate("/creatures")}>
+        <button onClick={() => navigate("/MyCreatures")}>
           My Creatures
         </button>
 
-        <button onClick={() => navigate("/shop")}>
+        <button onClick={() => navigate("/Shop")}>
           Shop
         </button>
 
-        <button onClick={() => navigate("/settings")}>
+        <button onClick={() => navigate("/Settings")}>
           Settings
         </button>
       </div>
