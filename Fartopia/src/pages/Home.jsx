@@ -54,7 +54,6 @@ export default function Home() {
     refetchOnWindowFocus: true,
   });
 
-  // keep UI synced with backend
   useEffect(() => {
     if (progress) {
       soundManager.setEnabled(progress.sound_enabled ?? true);
@@ -66,7 +65,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
+
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <motion.h1
             className="text-5xl md:text-6xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent"
@@ -79,10 +78,10 @@ export default function Home() {
           <CoinDisplay coins={progress?.coins || 0} />
         </div>
 
-        {/* Action buttons */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {/* ONLY CHANGE IS HERE: GameMenu -> MiniGame */}
-          <Link to={createPageUrl('MiniGame')} className="w-full" onClick={() => soundManager.playClickSound()}>
+
+          {/* RESTORED TO GAME MENU */}
+          <Link to={createPageUrl('GameMenu')} className="w-full" onClick={() => soundManager.playClickSound()}>
             <Button className="w-full h-20 bg-gradient-to-br from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-white rounded-2xl shadow-lg text-lg font-bold">
               <Gamepad2 className="mr-2 h-6 w-6" />
               Play Games!
@@ -111,7 +110,6 @@ export default function Home() {
           </Link>
         </div>
 
-        {/* Habitats */}
         <div className="bg-white/50 backdrop-blur-sm rounded-3xl p-6 shadow-xl">
           <h2 className="text-3xl font-bold text-purple-700 mb-6">
             🏠 Your Habitats
