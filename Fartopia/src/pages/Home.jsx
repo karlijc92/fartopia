@@ -29,182 +29,106 @@ const HABITATS = [
 ];
 
 export default function Home() {
-
   const queryClient = useQueryClient();
 
   const { data: progress } = useQuery({
-
     queryKey: ['gameProgress'],
-
     queryFn: async () => {
-
       let progs = await base44.entities.GameProgress.list();
 
       if (!progs || progs.length === 0) {
-
         const created = await base44.entities.GameProgress.create({
-
           coins: 500,
-
           unlocked_habitats: [],
-
           daily_streak: 0,
-
           last_daily_claim: null,
-
           sound_enabled: true,
-
           vibration_enabled: true,
-
         });
-
         return created;
-
       }
 
       return progs[0];
-
     },
-
     staleTime: 0,
-
     refetchOnWindowFocus: true,
-
   });
 
   // keep UI synced with backend
   useEffect(() => {
-
     if (progress) {
-
       soundManager.setEnabled(progress.sound_enabled ?? true);
-
       soundManager.setVibrationEnabled(progress.vibration_enabled ?? true);
-
       queryClient.setQueryData(['gameProgress'], progress);
-
     }
-
   }, [progress]);
 
   return (
-
     <div className="min-h-screen bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
-
       <div className="max-w-6xl mx-auto">
-
         {/* Header */}
-
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-
           <motion.h1
-
             className="text-5xl md:text-6xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent"
-
             animate={{ scale: [1, 1.05, 1] }}
-
             transition={{ duration: 2, repeat: Infinity }}
-
           >
-
             🎪 FARTOPIA ZOO
-
           </motion.h1>
 
           <CoinDisplay coins={progress?.coins || 0} />
-
         </div>
 
         {/* Action buttons */}
-
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-
-          <Link to={createPageUrl('GameMenu')} className="w-full" onClick={() => soundManager.playClickSound()}>
-
+          {/* ONLY CHANGE IS HERE: GameMenu -> MiniGame */}
+          <Link to={createPageUrl('MiniGame')} className="w-full" onClick={() => soundManager.playClickSound()}>
             <Button className="w-full h-20 bg-gradient-to-br from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-white rounded-2xl shadow-lg text-lg font-bold">
-
               <Gamepad2 className="mr-2 h-6 w-6" />
-
               Play Games!
-
             </Button>
-
           </Link>
 
           <Link to={createPageUrl('MyCreatures')} className="w-full" onClick={() => soundManager.playClickSound()}>
-
             <Button className="w-full h-20 bg-gradient-to-br from-purple-400 to-purple-600 hover:from-purple-500 hover:to-purple-700 text-white rounded-2xl shadow-lg text-lg font-bold">
-
               <Users className="mr-2 h-6 w-6" />
-
               My Creatures
-
             </Button>
-
           </Link>
 
           <Link to={createPageUrl('Shop')} className="w-full" onClick={() => soundManager.playClickSound()}>
-
             <Button className="w-full h-20 bg-gradient-to-br from-pink-400 to-rose-500 hover:from-pink-500 hover:to-rose-600 text-white rounded-2xl shadow-lg text-lg font-bold">
-
               <ShoppingBag className="mr-2 h-6 w-6" />
-
               Shop
-
             </Button>
-
           </Link>
 
           <Link to={createPageUrl('Settings')} className="w-full" onClick={() => soundManager.playClickSound()}>
-
             <Button className="w-full h-20 bg-gradient-to-br from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white rounded-2xl shadow-lg text-lg font-bold">
-
               <Settings className="mr-2 h-6 w-6" />
-
               Settings
-
             </Button>
-
           </Link>
-
         </div>
 
         {/* Habitats */}
-
         <div className="bg-white/50 backdrop-blur-sm rounded-3xl p-6 shadow-xl">
-
           <h2 className="text-3xl font-bold text-purple-700 mb-6">
-
             🏠 Your Habitats
-
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
             {HABITATS.map((habitat) => (
-
               <HabitatCard
-
                 key={habitat.id}
-
                 habitat={habitat}
-
                 isUnlocked={progress?.unlocked_habitats?.includes(habitat.id)}
-
                 progress={progress}
-
               />
-
             ))}
-
           </div>
-
         </div>
-
       </div>
-
     </div>
-
   );
-
 }
